@@ -52,15 +52,8 @@ tasks.withType(Javadoc) {
     options.addStringOption('Xdoclint:all,-syntax,-missing', '-quiet')
 }
 
-
-
-
-
-
 repositories {
     jcenter()
-    mavenCentral()
-    maven { url 'https://jitpack.io' }
 }
 
 sourceCompatibility = 1.8
@@ -78,17 +71,6 @@ dependencies {
     
     compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.21'
     runtime ('ch.qos.logback:logback-classic:1.1.7')
-    
-    
-    testCompile "org.codehaus.groovy:groovy-all:$groovyVersion"
-    testCompile('org.spockframework:spock-core:1.1-groovy-2.4') {
-        exclude module: 'groovy-all'
-    }
-    testCompile 'cglib:cglib-nodep:3.2.4'
-    testCompile 'org.objenesis:objenesis:2.4'
-    testCompile('com.athaydes:spock-reports:1.2.13') { transitive = false}
-    testCompile('ch.qos.logback:logback-classic:1.1.7')
-    
 }
 
 sourceSets.main.compileClasspath += configurations.provided
@@ -97,12 +79,6 @@ jar {
     manifest {
         attributes 'Implementation-Title': "${project.archivesBaseName}",
                 'Implementation-Version': helloDocVersion
-    }
-
-    from ("${projectDir}/src/main/java") {
-        include('**/*.fxml')
-        include('**/*.css')
-        include('**/*.png')
     }
 }
 
@@ -124,23 +100,6 @@ task "create-dirs" {
         sourceSets*.java.srcDirs*.each { it.mkdirs() }
         
         sourceSets*.resources.srcDirs*.each { it.mkdirs() }
-    }
-}
-
-eclipse {
-    classpath {
-        file {
-            whenMerged {
-                def jre = entries.find { it.path.contains 'org.eclipse.jdt.launching.JRE_CONTAINER' }
-                jre.accessRules.add(new org.gradle.plugins.ide.eclipse.model.AccessRule('0', 'javafx/**'))
-            }
-        }
-        plusConfigurations << configurations.provided
-    }
-    project {
-        file.beforeMerged { project ->
-            project.natures.clear()
-        }
     }
 }
 
@@ -211,8 +170,6 @@ gitPublish {
     }
 }  
 
-
-
 artifacts {
     (System.getenv("TRAVIS") == "true") ? archives(sourcesJar) : archives(sourcesJar, javadocJar)
 }
@@ -236,7 +193,6 @@ applicationDistribution.from("${rootProject.projectDir}/dist") {
 applicationDistribution.from("${rootProject.projectDir}/..") {
     include('LICENSE', 'NOTICE')
 }
-
 
 
 configureJavadoc(javadoc)
