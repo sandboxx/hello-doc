@@ -1,7 +1,7 @@
 plugins {
     id 'java'
     id 'idea'
-    id "org.ajoberstar.git-publish" version "1.0.0"
+    id "org.ajoberstar.git-publish" version "0.4.1"
 }
 
 repositories {
@@ -16,7 +16,6 @@ gitPublish {
     branch = 'gh-pages'
 
     contents {
-        gitPublishPush.enabled = true
         from file("doc")
         into "."
     }
