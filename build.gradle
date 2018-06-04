@@ -1,128 +1,22 @@
-import org.apache.tools.ant.filters.ReplaceTokens
-import groovy.text.SimpleTemplateEngine
-import org.kohsuke.github.*
-
-buildscript {
-    repositories {
-        jcenter()
-        maven {
-            url "https://plugins.gradle.org/m2/"
-        }
-    }
-    dependencies {
-        classpath 'org.kohsuke:github-api:1.90'
-    }
-}
-
 plugins {
     id 'java'
-    id 'groovy'
-    id 'application'
-    id 'eclipse'
     id 'idea'
-    
-    id "com.github.ethankhall.semantic-versioning" version "1.1.0"
-    id "com.github.ben-manes.versions" version "0.13.0"
-    id "org.asciidoctor.convert" version "1.5.3"
-    id "org.ajoberstar.git-publish" version "1.0.0-rc.1"
-    
-    id 'com.github.jk1.dependency-license-report' version '0.3.8'
-    
+    id "org.ajoberstar.git-publish" version "0.4.1"
 }
-
-project.version.with {
-    major = helloDocVersionMajor as int
-    minor= helloDocVersionMinor as int
-    patch = helloDocVersionPatch as int
-    if (project.hasProperty('helloDocVersionLabel')) {
-        preRelease = helloDocVersionLabel
-    }
-    releaseBuild = Boolean.valueOf(helloDocReleaseBuild)
-}
-ext.helloDocVersion = project.version as String
-ext.helloDocTag = Boolean.valueOf(helloDocReleaseBuild) ? "v$ext.helloDocVersion" : 'master'
-
-ext.groovyVersion = '2.4.12'
-
 
 group = 'org.beryx'
-version = helloDocVersion
-
-tasks.withType(Javadoc) {
-    options.addStringOption('Xdoclint:all,-syntax,-missing', '-quiet')
-}
 
 repositories {
     jcenter()
 }
 
 sourceCompatibility = 1.8
-
 def defaultEncoding = 'UTF-8'
 [compileJava, compileTestJava]*.options*.encoding = defaultEncoding
 
-configurations {
-    provided
-    compile {transitive = true}
-}
-
-
 dependencies {
-    
     compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.21'
     runtime ('ch.qos.logback:logback-classic:1.1.7')
-}
-
-sourceSets.main.compileClasspath += configurations.provided
-
-jar {
-    manifest {
-        attributes 'Implementation-Title': "${project.archivesBaseName}",
-                'Implementation-Version': helloDocVersion
-    }
-}
-
-task sourcesJar(type: Jar, dependsOn: classes) {
-    classifier = 'sources'
-    from sourceSets.main.allSource
-}
-
-task javadocJar(type: Jar, dependsOn: classes) {
-    classifier "javadoc"
-    from javadoc
-}
-artifacts {
-    (System.getenv("TRAVIS") == "true") ? archives(sourcesJar) : archives(sourcesJar, javadocJar)
-}
-
-task "create-dirs" {
-    doLast {
-        sourceSets*.java.srcDirs*.each { it.mkdirs() }
-        
-        sourceSets*.resources.srcDirs*.each { it.mkdirs() }
-    }
-}
-
-idea {
-    module {
-        scopes.PROVIDED.plus += [configurations.provided]
-    }
-}
-
-asciidoctor {
-    sourceDir = file("doc")
-    sources {include 'index.adoc'}
-    logDocuments = true
-    attributes 'source-highlighter': 'coderay',
-               'coderay-linenums-mode': 'table',
-               icons: 'font',
-               imagesdir: 'img',
-               'data-uri': '',
-               linkattrs: true,
-               linkcss: true,
-               'git-tag': helloDocTag,
-               'blob-root-master': "https://github.com/sandboxx/hello-doc/blob/master",
-               'blob-root': "https://github.com/sandboxx/hello-doc/blob/$helloDocTag"
 }
 
 gitPublish {
@@ -133,128 +27,8 @@ gitPublish {
     branch = 'gh-pages'
 
     contents {
-        def pgType = project.hasProperty('ghPageType') ? ghPageType : 'latest'
-        if(pgType == 'init') {
-            from file("ghpages")
-        } else if(pgType == 'list') {
-            from file("build/release-list")
-        } else {
-            from file("${asciidoctor.outputDir.path}/html5")
-            from file("build/docs")
-        }
-        def docDir = Boolean.valueOf(helloDocReleaseBuild) ? 'releases' : 'snapshots'
-        if(pgType == 'init') {
-            into "."
-        } else if(pgType == 'list') {
-            into "."
-            preserve {
-                include '**'
-                exclude "releases.md"
-            }
-        } else if(pgType == 'version') {
-            gitPublishPush.enabled = (docDir != 'snapshots')
-            into "$docDir/$helloDocVersion"
-
-            preserve {
-                include '**'
-                exclude "$docDir/$helloDocVersion"
-            }
-        } else {
-            into "$docDir/latest"
-
-            preserve {
-                include '**'
-                exclude "$docDir/latest"
-            }
-        }
+        gitPublishPush.enabled = true
+        from file("doc")
+        into "."
     }
 }  
-
-artifacts {
-    (System.getenv("TRAVIS") == "true") ? archives(sourcesJar) : archives(sourcesJar, javadocJar)
-}
-jar {
-    manifest {
-        attributes 'Main-Class': 'org.beryx.hellodoc.HelloDoc'
-    }
-}
-mainClassName = 'org.beryx.hellodoc.HelloDoc'
-
-applicationName = "helloDoc"
-
-startScripts {
-    defaultJvmOpts = ['-Dlogback.configurationFile=logback.xml']
-}
-
-applicationDistribution.from("${rootProject.projectDir}/dist") {
-    filter(ReplaceTokens, tokens:[helloDocVersion : helloDocVersion])
-}
-
-applicationDistribution.from("${rootProject.projectDir}/..") {
-    include('LICENSE', 'NOTICE')
-}
-
-
-configureJavadoc(javadoc)
-
-def configureJavadoc(task) {
-    configure(task) {
-        title "hello-doc Documentation ($helloDocVersion)"
-        destinationDir file("build/docs/javadoc")
-        if(project.configurations.hasProperty('provided')) {
-            classpath += project.configurations.provided
-        }
-        configure(options) {
-            links "http://docs.oracle.com/javase/8/docs/api/"
-        }
-    }
-}
-
-task "update-release-list" {
-    doLast {
-        updateReleaseList('https://sandboxx.github.io/hello-doc')
-    }
-}
-
-def updateReleaseList(String docBaseUrl) {
-    List<String> releases = getReleases()
-    def markdown = getReleasesMarkdown(releases, docBaseUrl)
-    def releaseListDir = new File('build/release-list')
-    releaseListDir.mkdirs()
-    new File(releaseListDir, 'releases.md').write(markdown)
-}
-
-def getReleases() {
-    GitHub gitHubApi = GitHub.connectUsingPassword(System.getenv('GH_PAGES_ACCESS_TOKEN') ?: '', '')
-    def releases = gitHubApi.getOrganization('sandboxx')
-            .getRepository('hello-doc')
-            .getDirectoryContent("releases", "gh-pages")*.name
-    releases.removeAll { !it || it == 'latest' }
-    releases.reverse()
-}
-
-def getReleasesMarkdown(List<String> releases, String docBaseUrl) {
-    def releasesTemplate = '''
-            ## List of all releases ##
-
-            **Latest snapshot**
-            - [documentation](\u0024docBaseUrl/snapshots/latest)
-            - [javadoc](\u0024docBaseUrl/snapshots/latest/javadoc)
-
-            <% releases.each { %>**Release \u0024it**
-              - [documentation](\u0024docBaseUrl/releases/\u0024it)
-              - [javadoc](\u0024docBaseUrl/releases/\u0024it/javadoc)
-
-            <% } %>
-        '''.stripIndent()
-
-    def engine = new SimpleTemplateEngine()
-    def template = engine.createTemplate(releasesTemplate)
-    def binding = [
-            docBaseUrl: docBaseUrl,
-            releases  : releases
-    ]
-
-    template.make(binding).toString()
-}
-

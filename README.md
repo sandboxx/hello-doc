@@ -8,5 +8,3 @@ Welcome to *hello-doc*!
 
 **Useful links**
  - [Documentation](https://sandboxx.github.io/hello-doc)
- - [javadoc](https://sandboxx.github.io/hello-doc/releases/latest/javadoc)
- - [List of all releases](https://github.com/sandboxx/hello-doc/blob/gh-pages/releases.md)
