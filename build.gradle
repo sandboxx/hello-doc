@@ -1,22 +1,11 @@
 plugins {
     id 'java'
     id 'idea'
-    id "org.ajoberstar.git-publish" version "0.4.1"
+    id "org.ajoberstar.git-publish" version "1.0.0"
 }
-
-group = 'org.beryx'
 
 repositories {
     jcenter()
-}
-
-sourceCompatibility = 1.8
-def defaultEncoding = 'UTF-8'
-[compileJava, compileTestJava]*.options*.encoding = defaultEncoding
-
-dependencies {
-    compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.21'
-    runtime ('ch.qos.logback:logback-classic:1.1.7')
 }
 
 gitPublish {
