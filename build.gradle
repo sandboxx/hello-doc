@@ -1,4 +1,5 @@
 plugins {
+    id 'java'
     id "org.ajoberstar.git-publish" version '0.4.1'
 }
 
