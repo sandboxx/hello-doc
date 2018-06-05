@@ -10,8 +10,8 @@ before_install:
   - chmod a+x ./travis-build.sh
   - chmod a+x ./gradlew
 
-# install:
-#   - ./gradlew tasks
+install:
+  - ./gradlew tasks
 
 script:
   - ./travis-build.sh
