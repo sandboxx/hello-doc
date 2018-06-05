@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-    id "org.ajoberstar.git-publish" version '0.4.1'
+    id "org.ajoberstar.git-publish" version '1.0.0'
 }
 
 ext.gitPublishVersion = (buildscript.configurations.classpath.find {it.name.startsWith('gradle-git-publish-')}.name - '.jar').substring(19)
