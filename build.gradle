@@ -1,14 +1,8 @@
 plugins {
-    id 'java'
-    id 'idea'
     id "org.ajoberstar.git-publish" version '1.0.0'
 }
 
 ext.gitPublishVersion = (buildscript.configurations.classpath.find {it.name.startsWith('gradle-git-publish-')}.name - '.jar').substring(19)
-
-repositories {
-    jcenter()
-}
 
 task genDoc {
     doLast {
