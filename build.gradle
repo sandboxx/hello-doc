@@ -1,22 +1,39 @@
 plugins {
     id 'java'
     id 'idea'
-    id "org.ajoberstar.git-publish" version "0.4.1"
+    id "org.ajoberstar.git-publish" version '1.0.0'
 }
+
+ext.gitPublishVersion = (buildscript.configurations.classpath.find {it.name.startsWith('gradle-git-publish-')}.name - '.jar').substring(19)
 
 repositories {
     jcenter()
 }
 
-gitPublish {
-    System.properties['org.ajoberstar.grgit.auth.username'] = System.getenv('GH_PAGES_ACCESS_TOKEN') ?: ''
-    System.properties['org.ajoberstar.grgit.auth.password'] = ''
+task genDoc {
+    doLast {
+        file("$buildDir/doc").mkdirs()
+        file("$buildDir/doc/index.html").text = """
+            <html>
+              <body>
+                <h3>Generated on ${new Date()} using git-publish version $gitPublishVersion</h3>
+                <h3>System properties:</h3>
+                <ul>
+                  ${System.properties.collect {'<li>' + it + '</li>'}.sort().join('\n')}
+                </ul>
+              </body>
+            </html>"""
+    }
+}
 
+gitPublish {
     repoUri = 'https://github.com/sandboxx/hello-doc.git'
     branch = 'gh-pages'
 
     contents {
-        from file("doc")
+        from file("$buildDir/doc")
         into "."
     }
 }  
+
+defaultTasks 'genDoc', 'gitPublishPush'
